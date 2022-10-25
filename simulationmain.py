@@ -56,8 +56,9 @@ class Simulation:
             self.add_customer_to_queue()
 
         else:
-            # FIND THE SERVER GETTING FREE THE FIRST
+            # If the server is going to be free before the next customer comes in
             for server, serving_time in enumerate(self.departureTimes):
+                # Find the server that gets free the first
                 if self.departureTimes[server] < self.timeOfNextArrival and self.departureTimes[server] < all(
                         list(
                                 map(
@@ -66,19 +67,27 @@ class Simulation:
                                         )
                                 )
                         ):
+
+                    # Then either serve other customers in queue if queue is not empty
                     self.serve_customer_in_queue(server = server)
 
     def _all_servers_are_busy(self):
+        """Add person to queue if the servers are currently busy"""
         self.lengthOfQueue += 1
         self.cumulativeQueueLength += 1
 
     def _get_next_arrival(self):
+        """Get the time of the next arrival"""
         self.timeOfNextArrival = self.clock + generateExponential(self.ARRIVAL_LAMBDA)
 
     def _serve_customer(self, chosenServer: int):
+
+        # Show the server as busy
         self.presentStateOfServers[chosenServer] = 1
+        # Generate the serving time for the customer being served as a binomial sum
         servingTime = generateBinomial(n = self.NUMBER_OF_BUS_STOPS)
         self.sumOfServingTimes[chosenServer] += self.departureTimes[chosenServer]
+        # Update the last time a customer was served for each server
         self.departureTimes[chosenServer] = self.clock + servingTime
 
     def add_customer_to_queue(self):
@@ -120,6 +129,7 @@ class Simulation:
         self.numberOfCustomersServed[server] += 1
         self.lengthOfSystem -= 1
 
+        # Take a person from the queue if not empty
         if self.lengthOfQueue > 0:
             self._serve_customer(server)
             self.lengthOfQueue -= 1
