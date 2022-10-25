@@ -1,6 +1,6 @@
 """
 Created on 04/222/2020
-by Bhavya jain
+by Samay Panwar
 """
 import numpy as np
 import pandas as pd
@@ -133,20 +133,7 @@ class Bank_Simulation:
     def gen_service_time_teller2(self):  # function to generate service time for teller 1 using inverse trnasform
         return (-np.log(1 - (np.random.uniform(low = 0.0, high = 1.0))) * 1.5)
 
-    def generateExponential(self, lmbda: float):
 
-        randomNumber = np.random.uniform(low = 0.0, high = 1.0)
-        return stats.expon.ppf(self, q = randomNumber, scale = 1 / lmbda)
-
-    def generateNormal(self, loc: float = 0, scale: float = 1):
-
-        randomNumber = np.random.uniform(low = 0.0, high = 1.0)
-        return stats.norm.ppf(self, q = randomNumber, scale = scale, loc = loc)
-
-    def generateBinomial(self, n: int, p: float = 0.5):
-
-        randomNumber = np.random.uniform(low = 0.0, high = 1.0)
-        return stats.binom.ppf(q = randomNumber, n = n, p = p)
 
 
 
