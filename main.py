@@ -1,16 +1,12 @@
-# This is a sample Python script.
+import numpy as np
+import pandas as pd
+from simulationmain import SimulationStuff
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+simulation = SimulationStuff()
+results = pd.DataFrame()
 
+while simulation.time < 100:
+    print(f"Current time is {simulation.time}.")
+    simulation.time_step()
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+print(f"Total arrivals is {simulation.total_arrivals} with {simulation.total_served} actually served.")

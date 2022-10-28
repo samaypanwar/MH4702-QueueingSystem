@@ -1,86 +1,109 @@
 import numpy as np
 from inverse_transform_sampling import generateExponential, generateBinomial
 import scipy
+from collections import deque
 
-
-class Simulation:
-
+class Customer:
     def __init__(self):
+        self.arrival_time = 0
+        self.served_time = 0
+        self.waiting_time = 0
+        self.serving_time = 0
+        self.time_in_system = self.departure_time - self.arrival_time
+
+class BusStop:
+    def __init__(self):
+        self.customers = 0
+        self.queue = deque()
+
+    def customer_arrives(self, customer: Customer):
+        self.queue.append(customer)
+    
+    def customer_leaves(self, customer: Customer):
+        self.queue.remove(customer)
+
+    def serve_customer(self):
+        if not self.queue.empty():
+            self.queue.pop(0)
+
+class Bus:
+    def __init__(self, seats):
+        self.seats = [Seat() for _ in range(seats)]
+        self.taken_seats = 0
+        self.free_seats = seats
+        self.total_customers_served = 0
+
+    def customer_alights(self, customer: Customer):
+        pass
+
+class Seat:
+    def __init__(self):
+        self.taken = 0
+
+    def customer_arrives(self):
+        self.taken = 1
+
+    def customer_leaves(self):
+        self.taken = 0
+
+class SimulationStuff:
+    
+    def __init__(self):
+        self.time = 0
+        self.busstop = BusStop()
+        self.bus = Bus()
+
+        self.t_next_arrival = self.generate_next_arrival()
+        self.t_next_departure = float('inf')
+
+        self.total_arrivals = 0
+        self.total_served = 0
 
         # Hyperparameter
         self.ARRIVAL_LAMBDA = 5
         self.NUMBER_OF_SEATS_ON_BUS = 5
         self.NUMBER_OF_BUS_STOPS = 10
         self.BAlKING_LENGTH_LOC = 10
+    
+    def time_step(self):
+        t_next_event = min(self.t_next_arrival, self.t_next_departure)
+        self.time = t_next_event
 
-        # Counter for the simulation
-        self.clock = 0
-        # Total number of arrival till the end of the simulation
-        self.totalNumberOfArrivals = 0
-        # Time of next arrival of customer
-        self.timeOfNextArrival = generateExponential(lmbda = self.ARRIVAL_LAMBDA)
-        # Departure time from server (bus) i
-        self.departureTimes = [float('inf') for i in range(self.NUMBER_OF_SEATS_ON_BUS)]
-        # Sum of serving times for each server in the simulation
-        self.sumOfServingTimes = [0 for i in range(self.NUMBER_OF_SEATS_ON_BUS)]
-        # Binary state of servers (bus) of whether serving or not presently
-        self.presentStateOfServers = [0 for i in range(self.NUMBER_OF_SEATS_ON_BUS)]
-        # Total wait time
-        self.totalWaitingTime = 0
-        # Total length of queue presently
-        self.lengthOfQueue = 0
-        # Total number of customers who had to wait in queue to be served
-        self.cumulativeQueueLength = 0
-        # Total number of customers in the queueing system
-        self.lengthOfSystem = 0
-        # Number of customers served by each server (bus)
-        self.numberOfCustomersServed = [0 for i in range(self.NUMBER_OF_SEATS_ON_BUS)]
-        # Number of customers who left without being served
-        self.numberOfLostCustomers = 0
-
-    def timing_routine(self):
-        """
-        The timing routine decides which event occurs next by comparing the scheduled time of events
-        and advances the simulation clock to the respective event.
-        Initially, the departure events are scheduled to occur at time infinity(since there are no customers),
-        which guarantees that the first event will be an arrival event.
-        :return:
-        """
-
-        timeToNextEvent = min(self.timeOfNextArrival, min(self.departureTimes))
-
-        self.totalWaitingTime += (timeToNextEvent - self.clock) if self.lengthOfSystem > 0 else 0
-        self.clock += timeToNextEvent
-
-        if self.timeOfNextArrival < min(self.departureTimes):
-            self.add_customer_to_queue()
-
+        if self.t_next_arrival < self.t_next_departure:
+            print("New customer arrives!")
+            self.customer_arrives()
         else:
-            # If the server is going to be free before the next customer comes in
-            for server, serving_time in enumerate(self.departureTimes):
-                # Find the server that gets free the first
-                if self.departureTimes[server] < self.timeOfNextArrival and self.departureTimes[server] < all(
-                        list(
-                                map(
-                                        lambda x: x > self.departureTimes[server],
-                                        self.departureTimes[:server] + self.departureTimes[server + 1:]
-                                        )
-                                )
-                        ):
+            print("Another customer served (:")
+            self.customer_alights(self.bus)
+    
+    def generate_next_arrival(self):
+        return self.time + generateExponential(self.ARRIVAL_LAMBDA)
 
-                    # Then either serve other customers in queue if queue is not empty
-                    self.serve_customer_in_queue(server = server)
+    def generate_serving_time(self):
+        return self.time + generateBinomial(n = self.NUMBER_OF_BUS_STOPS)
 
-    def _all_servers_are_busy(self):
-        """Add person to queue if the servers are currently busy"""
-        self.lengthOfQueue += 1
-        self.cumulativeQueueLength += 1
+    def customer_arrives(self):
+        customer = Customer()
+        if self.bus.free_seats > 0:
+            self.customer_boards(customer)
+        else:
+            self.customer_queues(customer)
+        self.t_next_arrival = self.generate_next_arrival()
+    
+    def customer_queues(self, customer: Customer):
+        pass
 
-    def _get_next_arrival(self):
-        """Get the time of the next arrival"""
-        self.timeOfNextArrival = self.clock + generateExponential(self.ARRIVAL_LAMBDA)
+    def customer_boards(self, customer: Customer):
+        pass
 
-    def _serve_customer(self, chosenServer: int):
+    def customer_alights(self, bus: Bus):
+        bus.customer_alights()
+        if not self.busstop.queue.empty():
+            self.serve_customer(bus)
+            self.generate_serving_time()
+
+    def serve_customer(self, bus: Bus):
+        customer = bus_stop
 
         # Show the server as busy
         self.presentStateOfServers[chosenServer] = 1
@@ -88,63 +111,4 @@ class Simulation:
         servingTime = generateBinomial(n = self.NUMBER_OF_BUS_STOPS)
         self.sumOfServingTimes[chosenServer] += self.departureTimes[chosenServer]
         # Update the last time a customer was served for each server
-        self.departureTimes[chosenServer] = self.clock + servingTime
-
-    def add_customer_to_queue(self):
-
-        self.totalNumberOfArrivals += 1
-        self.lengthOfSystem += 1
-
-        if self.lengthOfQueue == 0:
-
-            if all(list(map(lambda x: x == 1, self.presentStateOfServers))):
-
-                self._all_servers_are_busy()
-                self._get_next_arrival()
-
-            elif all(list(map(lambda x: x == 0, self.presentStateOfServers))):
-
-                chosenServer = np.random.choice(range(self.NUMBER_OF_SEATS_ON_BUS))
-                self._serve_customer(chosenServer)
-                self._get_next_arrival()
-
-            else:
-                chosenServer = self.presentStateOfServers.index(0)
-                self._serve_customer(chosenServer)
-                self._get_next_arrival()
-
-        else:
-
-            probabilityOfBalking = scipy.stats.expon.pdf(self.lengthOfQueue, loc = self.BAlKING_LENGTH_LOC)
-
-            if np.random.uniform() < probabilityOfBalking:
-                self.numberOfLostCustomers += 1
-
-            else:
-                self._all_servers_are_busy()
-                self._get_next_arrival()
-
-    def serve_customer_in_queue(self, server):
-
-        self.numberOfCustomersServed[server] += 1
-        self.lengthOfSystem -= 1
-
-        # Take a person from the queue if not empty
-        if self.lengthOfQueue > 0:
-            self._serve_customer(server)
-            self.lengthOfQueue -= 1
-
-        else:
-            self.departureTimes[server] = float('inf')
-            self.presentStateOfServers[server] = 0
-
-
-
-
-
-
-
-
-
-
-
+        self.departureTimes[chosenServer] = self.time + servingTime
