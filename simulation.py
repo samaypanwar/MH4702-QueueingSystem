@@ -1,10 +1,6 @@
 from inverse_transform_sampling import generate_exponential, generate_binomial
 from collections import deque
 
-ARRIVAL_LAMBDA = 10 # expected number of customer arrivals in time period
-NUMBER_OF_SEATS_ON_BUS = 50
-NUMBER_OF_BUS_STOPS = 10
-
 class Customer:
     def __init__(self, birth_time: float):
         self.status = 'In queue'
@@ -90,15 +86,15 @@ class Bus:
 
 class SimulationStuff:
     
-    def __init__(self):
+    def __init__(self, arrival_lambda, bus_seats, bus_stops):
         # Hyperparameter
-        self.arrival_lambda = ARRIVAL_LAMBDA
-        self.bus_seats = NUMBER_OF_SEATS_ON_BUS
-        self.bus_stops = NUMBER_OF_BUS_STOPS
+        self.ARRIVAL_LAMBDA = arrival_lambda # number of customers in a time period
+        self.BUS_SEATS = bus_seats # number of seats on a bus (servers)
+        self.BUS_STOPS = bus_stops # number of bus stops
 
         self.time = 0
         self.busstop = BusStop()
-        self.bus = Bus(self.bus_seats)
+        self.bus = Bus(self.BUS_SEATS)
 
         self.t_next_arrival = self.generate_next_arrival()
         self.t_next_departure = float('inf')
@@ -114,10 +110,10 @@ class SimulationStuff:
         }
 
     def generate_next_arrival(self):
-        return self.time + generate_exponential(self.arrival_lambda)
+        return self.time + generate_exponential(self.ARRIVAL_LAMBDA)
 
     def generate_serving_time(self):
-        return self.time + generate_binomial(n = self.bus_stops)
+        return self.time + generate_binomial(n = self.BUS_STOPS)
 
     def time_step(self):
         t_next_event = min(self.t_next_arrival, self.t_next_departure)
