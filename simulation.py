@@ -1,145 +1,151 @@
-"""
-Created on 04/222/2020
-by Samay Panwar
-"""
-import numpy as np
-import pandas as pd
-import scipy.stats as stats
+from inverse_transform_sampling import generate_exponential, generate_binomial
+from collections import deque
 
-class Bank_Simulation:
+ARRIVAL_LAMBDA = 10 # expected number of customer arrivals in time period
+NUMBER_OF_SEATS_ON_BUS = 50
+NUMBER_OF_BUS_STOPS = 10
+
+class Customer:
+    def __init__(self, birth_time: float):
+        self.status = 'In queue'
+        self.arrival_time = birth_time
+        self.boarded_time = float('inf')
+        self.departure_time = float('inf')
+
+    def board_bus(self, time: float):
+        print("Customer boards bus.")
+        self.boarded_time = time
+        self.status = 'On bus'
+
+    def alight_bus(self, departure_time: float):
+        print("Customer alights bus.")
+        self.departure_time = departure_time
+        self.status = 'Served'
+
+    def calculate_stats(self):
+        return {
+            'arrival_time': self.arrival_time,
+            'boarded_time': self.boarded_time,
+            'departure_time': self.departure_time,
+            'waiting_time': self.boarded_time - self.arrival_time,
+            'serving_time': self.departure_time - self.boarded_time,
+            'time_in_system': self.departure_time - self.arrival_time
+        }
+
+class BusStop:
     def __init__(self):
-        self.clock = 0.0  # simulation clock
-        self.num_arrivals = 0  # total number of arrivals
-        self.t_arrival = self.generateExponential(3)  # time of next arrival
-        self.t_departure1 = float('inf')  # departure time from server 1
-        self.t_departure2 = float('inf')  # departure time from server 2
-        self.dep_sum1 = 0  # Sum of service times by teller 1
-        self.dep_sum2 = 0  # Sum of service times by teller 2
-        self.state_T1 = 0  # current state of server1 (binary)
-        self.state_T2 = 0  # current state of server2 (binary)
-        self.total_wait_time = 0.0  # total wait time
-        self.num_in_q = 0  # current number in queue
-        self.number_in_queue = 0  # customers who had to wait in line(counter)
-        self.num_in_system = 0  # current number of customers in system
-        self.num_of_departures1 = 0  # number of customers served by teller 1
-        self.num_of_departures2 = 0  # number of customers served by teller 2
-        self.lost_customers = 0  # customers who left without service
+        self.customers = 0
+        self.queue = deque()
 
-    def time_adv(self):  # timing routine
-        t_next_event = min(self.t_arrival, self.t_departure1, self.t_departure2)  # determine time of next event
-        self.total_wait_time += (self.num_in_q * (t_next_event - self.clock))
-        self.clock = t_next_event
+    def customer_arrives(self, customer: Customer):
+        self.queue.append(customer)
+        self.customers += 1
+    
+    def customer_leaves(self, customer: Customer):
+        self.queue.remove(customer)
+        self.customers -= 1
 
-        if self.t_arrival < self.t_departure1 and self.t_arrival < self.t_departure2:
-            self.arrival()
-        elif self.t_departure1 < self.t_arrival and self.t_departure1 < self.t_departure2:
-            self.teller1()
+    def serve_customer(self):
+        if self.queue:
+            self.customers -= 1
+            return self.queue.popleft()
+
+class Bus:
+    def __init__(self, seats: int):
+        self.seats = [None] * seats
+        self.departure_times = [float('inf')] * seats
+        self.free_seats = seats
+        self.total_customers_served = 0
+
+    def get_next_departure_time(self):
+        return min(self.departure_times)
+
+    def customer_boards(self, customer: Customer, time: float, serving_time: float):
+        if self.free_seats == 0:
+            print("No seats available!")
+            return
+        
+        available_seat = self.seats.index(None)
+        self.seats[available_seat] = customer
+        customer.board_bus(time)
+        self.departure_times[available_seat] = serving_time
+        self.free_seats -= 1
+
+    def customers_alight(self, current_time: float):
+        served = 0
+        while current_time in self.departure_times:
+            seat = self.departure_times.index(current_time)
+            customer = self.seats[seat]
+            customer.alight_bus(current_time)
+            print(customer.calculate_stats())
+            self.seats[seat] = None
+            self.departure_times[seat] = float('inf')
+            self.free_seats += 1
+            self.total_customers_served += 1
+            served += 1
+        return served
+
+    def calculate_stats(self):
+        return {'total_customers_served': self.total_customers_served}
+
+class SimulationStuff:
+    
+    def __init__(self):
+        # Hyperparameter
+        self.arrival_lambda = ARRIVAL_LAMBDA
+        self.bus_seats = NUMBER_OF_SEATS_ON_BUS
+        self.bus_stops = NUMBER_OF_BUS_STOPS
+
+        self.time = 0
+        self.busstop = BusStop()
+        self.bus = Bus(self.bus_seats)
+
+        self.t_next_arrival = self.generate_next_arrival()
+        self.t_next_departure = float('inf')
+
+        self.total_arrivals = 0
+        self.total_served = 0
+    
+    def calculate_stats(self):
+        return {
+            'arrivals': self.total_arrivals,
+            'queue': self.busstop.customers,
+            'served': self.total_served
+        }
+
+    def generate_next_arrival(self):
+        return self.time + generate_exponential(self.arrival_lambda)
+
+    def generate_serving_time(self):
+        return self.time + generate_binomial(n = self.bus_stops)
+
+    def time_step(self):
+        t_next_event = min(self.t_next_arrival, self.t_next_departure)
+        self.time = t_next_event
+
+        if self.t_next_arrival < self.t_next_departure:
+            print("New customer arrives!")
+            self.customer_arrives() # bus stop
         else:
-            self.teller2()
+            print("Another customer served (:")
+            self.customers_alight() # bus
 
-    def arrival(self):
-        self.num_arrivals += 1
-        self.num_in_system += 1
-
-        if self.num_in_q == 0:  # schedule next departure or arrival depending on state of servers
-            if self.state_T1 == 1 and self.state_T2 == 1:
-                self.num_in_q += 1
-                self.number_in_queue += 1
-                self.t_arrival = self.clock + self.generateExponential(3)
-
-
-            elif self.state_T1 == 0 and self.state_T2 == 0:
-
-                if np.random.choice([0, 1]) == 1:
-                    self.state_T1 = 1
-                    self.dep1 = self.gen_service_time_teller1()
-                    self.dep_sum1 += self.dep1
-                    self.t_departure1 = self.clock + self.dep1
-                    self.t_arrival = self.clock + self.gen_int_arr()
-
-                else:
-                    self.state_T2 = 1
-                    self.dep2 = self.gen_service_time_teller2()
-                    self.dep_sum2 += self.dep2
-                    self.t_departure2 = self.clock + self.dep2
-                    self.t_arrival = self.clock + self.gen_int_arr()
-
-
-            elif self.state_T1 == 0 and self.state_T2 == 1:  # if server 2 is busy customer goes to server 1
-                self.dep1 = self.gen_service_time_teller1()
-                self.dep_sum1 += self.dep1
-                self.t_departure1 = self.clock + self.dep1
-                self.t_arrival = self.clock + self.gen_int_arr()
-                self.state_T1 = 1
-            else:  # otherwise customer goes to server 2
-                self.dep2 = self.gen_service_time_teller2()
-                self.dep_sum2 += self.dep2
-                self.t_departure2 = self.clock + self.dep2
-                self.t_arrival = self.clock + self.gen_int_arr()
-                self.state_T2 = 1
-
-        elif self.num_in_q < 4 and self.num_in_q >= 1:
-            self.num_in_q += 1
-            self.number_in_queue += 1  # if queue length is less than 4 generate next arrival and make customer join queue
-            self.t_arrival = self.clock + self.gen_int_arr()
-
-        elif self.num_in_q == 4:  # if queue length is 4 equal prob to leave or stay
-            if np.random.choice([0, 1]) == 0:
-                self.num_in_q += 1
-                self.number_in_queue += 1
-                self.t_arrival = self.clock + self.gen_int_arr()
-            else:
-                self.lost_customers += 1
-
-
-        elif self.num_in_q >= 5:  # if queue length is more than 5 60% chance of leaving
-            if np.random.choice([0, 1], p = [0.4, 0.6]) == 0:
-                self.t_arrival = self.clock + self.gen_int_arr()
-                self.num_in_q += 1
-                self.number_in_queue += 1
-            else:
-                self.lost_customers += 1
-
-    def teller1(self):  # departure from server 2
-        self.num_of_departures1 += 1
-        self.num_in_system -= 1
-        if self.num_in_q > 0:
-            self.dep1 = self.gen_service_time_teller1()
-            self.dep_sum1 += self.dep1
-            self.t_departure1 = self.clock + self.dep1
-            self.num_in_q -= 1
+    def customer_arrives(self):
+        customer = Customer(self.time)
+        serving_time = self.generate_serving_time()
+        if self.bus.free_seats > 0:
+            self.bus.customer_boards(customer, self.time, serving_time)
+            self.t_next_departure = self.bus.get_next_departure_time()
         else:
-            self.t_departure1 = float('inf')
-            self.state_T1 = 0
+            self.busstop.customer_arrives(customer)
+        self.t_next_arrival = self.generate_next_arrival()
+        self.total_arrivals += 1
 
-    def teller2(self):  # departure from server 1
-        self.num_of_departures2 += 1
-        self.num_in_system -= 1
-        if self.num_in_q > 0:
-            self.dep2 = self.gen_service_time_teller2()
-            self.dep_sum2 += self.dep2
-            self.t_departure2 = self.clock + self.dep2
-            self.num_in_q -= 1
-        else:
-            self.t_departure2 = float('inf')
-            self.state_T2 = 0
-
-    def gen_int_arr(self):  # function to generate arrival times using inverse trnasform
-        return (-np.log(1 - (np.random.uniform(low = 0.0, high = 1.0))) * 3)
-
-    def gen_service_time_teller1(self):  # function to generate service time for teller 1 using inverse trnasform
-        return (-np.log(1 - (np.random.uniform(low = 0.0, high = 1.0))) * 1.2)
-
-    def gen_service_time_teller2(self):  # function to generate service time for teller 1 using inverse trnasform
-        return (-np.log(1 - (np.random.uniform(low = 0.0, high = 1.0))) * 1.5)
-
-
-
-
-
-
-
-
-
-
-
+    def customers_alight(self):
+        served = self.bus.customers_alight(self.time)
+        self.total_served += served
+        while self.bus.free_seats > 0 and self.busstop.queue:
+            customer = self.busstop.serve_customer()
+            serving_time = self.generate_serving_time()
+            self.bus.customer_boards(customer, self.time, serving_time)
+        self.t_next_departure = self.bus.get_next_departure_time()

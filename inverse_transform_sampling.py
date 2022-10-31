@@ -1,8 +1,7 @@
 import numpy as np
-import pandas as pd
 import scipy.stats as stats
 
-def generateExponential(lmbda: float):
+def generate_exponential(lmbda: float):
     """This function generates an exponential random variable with the provided parameters.
 
     Parameters----
@@ -13,7 +12,7 @@ def generateExponential(lmbda: float):
     return stats.expon.ppf(q = randomNumber, scale = 1 / lmbda)
 
 
-def generateNormal(loc: float = 0, scale: float = 1):
+def generate_normal(loc: float = 0, scale: float = 1):
     """This function generates an normal random variable with the provided parameters.
 
     Parameters----
@@ -25,7 +24,7 @@ def generateNormal(loc: float = 0, scale: float = 1):
     return stats.norm.ppf(q = randomNumber, scale = scale, loc = loc)
 
 
-def generateBinomial(n: int, p: float = 0.5):
+def generate_binomial(n: int, p: float = 0.5):
     """This function generates a binomial random variable with the provided parameters.
 
     Parameters----
