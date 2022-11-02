@@ -157,64 +157,119 @@ class Bus:
         return {'total_customers_served': self.total_customers_served}
 
 
-class SimulationStuff:
+class Simulation:
 
-    def __init__(self, arrival_lambda, bus_seats, bus_stops):
-        # Hyperparameter
-        self.ARRIVAL_LAMBDA = arrival_lambda  # number of customers in a time period
-        self.BUS_SEATS = bus_seats  # number of seats on a bus (servers)
-        self.BUS_STOPS = bus_stops  # number of bus stops
+    def __init__(self, arrival_lambda: float, bus_seats: int, bus_stops: int, verbose: bool = False):
+        """This class is responsible for managing the simulation of our system and keeping track of states and events"""
 
+        # Hyper-parameters
+        # Number of customers in a time period
+        self.ARRIVAL_LAMBDA = arrival_lambda
+        # Number of seats on a bus (servers)
+        self.BUS_SEATS = bus_seats
+        # Number of bus stops
+        self.BUS_STOPS = bus_stops
+
+        # System time
         self.time = 0
-        self.busstop = BusStop()
+
+        # Instance of a queue of customers
+        self.busStop = BusStop()
+        # Instance of a set of servers
         self.bus = Bus(self.BUS_SEATS)
 
-        self.t_next_arrival = self.generate_next_arrival()
-        self.t_next_departure = float('inf')
+        # Get the next Events in the system
+        self.time_to_next_arrival = self.generate_next_arrival()
+        self.time_to_next_departure = float('inf')
 
+        # Keep track of system statistics
         self.total_arrivals = 0
         self.total_served = 0
+        self.verbose = verbose
 
-    def calculate_stats(self):
+    def calculate_statistics(self):
+        """This function returns the relevant statistics to the simulation"""
+
         return {
                 'arrivals': self.total_arrivals,
-                'queue'   : self.busstop.customers,
+                'queue'   : self.busStop.customers,
                 'served'  : self.total_served
                 }
 
     def generate_next_arrival(self):
+        """This function generates the next arrival time for a customer"""
         return self.time + generate_exponential(self.ARRIVAL_LAMBDA)
 
     def generate_serving_time(self):
+        """This function generates the next departure time for a customer"""
         return self.time + generate_binomial(n = self.BUS_STOPS)
 
     def time_step(self):
-        t_next_event = min(self.t_next_arrival, self.t_next_departure)
-        self.time = t_next_event
+        """This function moves the simulation forward to the next step"""
 
-        if self.t_next_arrival < self.t_next_departure:
-            print("New customer arrives!")
-            self.customer_arrives()  # bus stop
+        # Either a new customer arrives or an existing customer leaves after being served
+        time_to_next_event = min(self.time_to_next_arrival, self.time_to_next_departure)
+
+        # Update the system clock
+        self.time = time_to_next_event
+
+        if self.time_to_next_arrival < self.time_to_next_departure:
+
+            if self.verbose:
+                print("New customer arrives!")
+
+            # A customer arrives at the bus stop
+            self.customer_arrives()
         else:
-            print("Another customer served (:")
-            self.customers_alight()  # bus
+
+            if self.verbose:
+                print("Another customer served :)")
+
+            # A customer leaves the bus after being served
+            self.customers_alight()
 
     def customer_arrives(self):
+        """This function takes care of when a customer is added to the queue after arriving"""
+
+        # Create a new customer instance at the current time
         customer = Customer(self.time)
+        # Find the time that it will take to serve the newly arrived customer
         serving_time = self.generate_serving_time()
+
+        # If there are free seats on the bus
         if self.bus.free_seats > 0:
+
+            # Add the customer to the bus
             self.bus.customer_boards(customer, self.time, serving_time)
-            self.t_next_departure = self.bus.get_next_departure_time()
+            # Update the next time that a customer is going to be served
+            self.time_to_next_departure = self.bus.get_next_departure_time()
+
         else:
-            self.busstop.customer_arrives(customer)
-        self.t_next_arrival = self.generate_next_arrival()
+
+            # Add the customer to the queue
+            self.busStop.customer_arrives(customer)
+
+        # Find the next time that a customer is going to be arriving in the system
+        self.time_to_next_arrival = self.generate_next_arrival()
+
+        # Update system statistics
         self.total_arrivals += 1
 
     def customers_alight(self):
+        """This function takes care of when a customer leaves the bus after being served"""
+
+        # Returns the number of customers served at the current time
         served = self.bus.customers_alight(self.time)
+        # Update system statistics
         self.total_served += served
-        while self.bus.free_seats > 0 and self.busstop.queue:
-            customer = self.busstop.serve_customer()
+
+        # While there are available seats on the bus and there is a queue
+        while self.bus.free_seats > 0 and self.busStop.queue:
+
+            # Get customers into the bus and find their serving times (FIFO)
+            customer = self.busStop.serve_customer()
             serving_time = self.generate_serving_time()
             self.bus.customer_boards(customer, self.time, serving_time)
-        self.t_next_departure = self.bus.get_next_departure_time()
+
+        # Update the next time that a customer is going to be served
+        self.time_to_next_departure = self.bus.get_next_departure_time()
