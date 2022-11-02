@@ -1,5 +1,6 @@
 from inverse_transform_sampling import generate_exponential, generate_binomial
 from collections import deque
+from typing import List, Dict
 
 """File containing the required classes for our simulation"""
 
@@ -85,7 +86,8 @@ class BusStop:
 
 
 class Bus:
-    def __init__(self, seats: int, verbose: bool = False):
+    def __init__(self, seats: int, customer_history: List[Dict] = None, verbose: bool = False):
+
         """This class is responsible for acting as the servers in our system"""
 
         # Instantiate empty seats in the bus
@@ -98,6 +100,11 @@ class Bus:
         self.total_customers_served = 0
 
         self.verbose = verbose
+
+        if customer_history is None:
+            customer_history = list()
+
+        self.customer_history = customer_history
 
     def get_next_departure_time(self):
         """This function gets the minimum next time that a customer leaves his seat (has been served)"""
@@ -136,6 +143,7 @@ class Bus:
             customer = self.seats[seat_number]
             # Make them leave
             customer.alight_bus(current_time)
+            self.customer_history.append(customer.calculate_stats())
 
             if self.verbose:
                 print(customer.calculate_stats())
@@ -176,7 +184,7 @@ class Simulation:
         # Instance of a queue of customers
         self.busStop = BusStop()
         # Instance of a set of servers
-        self.bus = Bus(self.BUS_SEATS)
+        self.bus = Bus(seats = self.BUS_SEATS, verbose = verbose)
 
         # Get the next Events in the system
         self.time_to_next_arrival = self.generate_next_arrival()
@@ -186,6 +194,7 @@ class Simulation:
         self.total_arrivals = 0
         self.total_served = 0
         self.verbose = verbose
+        self.customer_history = []
 
     def calculate_statistics(self):
         """This function returns the relevant statistics to the simulation"""
@@ -195,6 +204,12 @@ class Simulation:
                 'queue'   : self.busStop.customers,
                 'served'  : self.total_served
                 }
+
+    def get_customer_history(self):
+        """This function returns the customer history of all the customers served by the bus"""
+
+        return self.bus.customer_history + [customer.calculate_stats() for customer in self.bus.seats] + [
+                customer.calculate_stats() for customer in self.busStop.queue]
 
     def generate_next_arrival(self):
         """This function generates the next arrival time for a customer"""
@@ -232,7 +247,7 @@ class Simulation:
         """This function takes care of when a customer is added to the queue after arriving"""
 
         # Create a new customer instance at the current time
-        customer = Customer(self.time)
+        customer = Customer(self.time, self.verbose)
         # Find the time that it will take to serve the newly arrived customer
         serving_time = self.generate_serving_time()
 
