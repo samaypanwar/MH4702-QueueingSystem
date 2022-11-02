@@ -1,32 +1,53 @@
 from inverse_transform_sampling import generate_exponential, generate_binomial
 from collections import deque
 
+"""File containing the required classes for our simulation"""
+
+
 class Customer:
-    def __init__(self, birth_time: float):
-        self.status = 'In queue'
+    def __init__(self, birth_time: float, verbose: bool = False):
+        """This class creates a new customer object that needs the lambda parameter for the birth process"""
+
+        self.status = 'In Queue'
+        # Time of arrival of the customer in the system
         self.arrival_time = birth_time
+        # Time of entering the bus for the customer in the system
         self.boarded_time = float('inf')
+        # Time of being served for the customer in the system
         self.departure_time = float('inf')
 
-    def board_bus(self, time: float):
-        print("Customer boards bus.")
-        self.boarded_time = time
+        self.verbose = verbose
+
+    def board_bus(self, boarding_time: float):
+        """Function that updates the status of the customer and notes down the time the customer boards the bus"""
+
+        if self.verbose:
+            print("Customer boards bus.")
+
+        self.boarded_time = boarding_time
         self.status = 'On bus'
 
     def alight_bus(self, departure_time: float):
-        print("Customer alights bus.")
+        """Function that updates the status of the customer and notes down the time the customer leaves the bus"""
+
+        if self.verbose:
+            print("Customer alights bus.")
+
         self.departure_time = departure_time
         self.status = 'Served'
 
     def calculate_stats(self):
+        """This function returns all the relevant statistics for the customer while they were in the system"""
+
         return {
-            'arrival_time': self.arrival_time,
-            'boarded_time': self.boarded_time,
-            'departure_time': self.departure_time,
-            'waiting_time': self.boarded_time - self.arrival_time,
-            'serving_time': self.departure_time - self.boarded_time,
-            'time_in_system': self.departure_time - self.arrival_time
-        }
+                'arrival_time'  : self.arrival_time,
+                'boarded_time'  : self.boarded_time,
+                'departure_time': self.departure_time,
+                'waiting_time'  : self.boarded_time - self.arrival_time,
+                'serving_time'  : self.departure_time - self.boarded_time,
+                'time_in_system': self.departure_time - self.arrival_time
+                }
+
 
 class BusStop:
     def __init__(self):
@@ -36,7 +57,7 @@ class BusStop:
     def customer_arrives(self, customer: Customer):
         self.queue.append(customer)
         self.customers += 1
-    
+
     def customer_leaves(self, customer: Customer):
         self.queue.remove(customer)
         self.customers -= 1
@@ -45,6 +66,7 @@ class BusStop:
         if self.queue:
             self.customers -= 1
             return self.queue.popleft()
+
 
 class Bus:
     def __init__(self, seats: int):
@@ -60,7 +82,7 @@ class Bus:
         if self.free_seats == 0:
             print("No seats available!")
             return
-        
+
         available_seat = self.seats.index(None)
         self.seats[available_seat] = customer
         customer.board_bus(time)
@@ -84,13 +106,14 @@ class Bus:
     def calculate_stats(self):
         return {'total_customers_served': self.total_customers_served}
 
+
 class SimulationStuff:
-    
+
     def __init__(self, arrival_lambda, bus_seats, bus_stops):
         # Hyperparameter
-        self.ARRIVAL_LAMBDA = arrival_lambda # number of customers in a time period
-        self.BUS_SEATS = bus_seats # number of seats on a bus (servers)
-        self.BUS_STOPS = bus_stops # number of bus stops
+        self.ARRIVAL_LAMBDA = arrival_lambda  # number of customers in a time period
+        self.BUS_SEATS = bus_seats  # number of seats on a bus (servers)
+        self.BUS_STOPS = bus_stops  # number of bus stops
 
         self.time = 0
         self.busstop = BusStop()
@@ -101,13 +124,13 @@ class SimulationStuff:
 
         self.total_arrivals = 0
         self.total_served = 0
-    
+
     def calculate_stats(self):
         return {
-            'arrivals': self.total_arrivals,
-            'queue': self.busstop.customers,
-            'served': self.total_served
-        }
+                'arrivals': self.total_arrivals,
+                'queue'   : self.busstop.customers,
+                'served'  : self.total_served
+                }
 
     def generate_next_arrival(self):
         return self.time + generate_exponential(self.ARRIVAL_LAMBDA)
@@ -121,10 +144,10 @@ class SimulationStuff:
 
         if self.t_next_arrival < self.t_next_departure:
             print("New customer arrives!")
-            self.customer_arrives() # bus stop
+            self.customer_arrives()  # bus stop
         else:
             print("Another customer served (:")
-            self.customers_alight() # bus
+            self.customers_alight()  # bus
 
     def customer_arrives(self):
         customer = Customer(self.time)
