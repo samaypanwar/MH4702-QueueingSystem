@@ -25,9 +25,10 @@ def run_simulation(
         if verbose:
             print(
                     f"Total arrivals: {stats['arrivals']}, total queue length: {stats['queue']}, total served: {stats['served']}."
-                    )
-            print("\nSimulation complete.")
-            print(f"Total arrivals is {simulation.total_arrivals} with {simulation.total_served} actually served.")
+                  )
+    if verbose:
+        print("\nSimulation complete.")
+        print(f"Total arrivals is {simulation.total_arrivals} with {simulation.total_served} actually served.")
 
     return simulation.get_customer_history()
 
