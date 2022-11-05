@@ -209,8 +209,8 @@ class Simulation:
     def get_customer_history(self):
         """This function returns the customer history of all the customers served by the bus"""
 
-        return self.bus.customer_history + [customer.calculate_stats() for customer in self.bus.seats] + [
-                customer.calculate_stats() for customer in self.busStop.queue]
+        return self.bus.customer_history + [customer.calculate_stats() for customer in self.bus.seats if customer is
+                                            not None] + [customer.calculate_stats() for customer in self.busStop.queue]
 
     def generate_next_arrival(self):
         """This function generates the next arrival time for a customer"""

@@ -2,8 +2,26 @@ from utils import Simulation
 from typing import List, Dict
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 
+def get_statistics_distribution(arrival_lambda: float, bus_seats: int, bus_stops: int, time_limit: float = 100,
+                                verbose: bool = False, runs: int = 1000
+                                ):
+    stats = {'W': [], 'L': [], 'S': []}
+    for i in tqdm(range(runs)):
+        result = run_simulation(
+                        arrival_lambda = arrival_lambda,
+                        bus_seats = bus_seats,
+                        bus_stops = bus_stops,
+                        time_limit = time_limit,
+                        verbose = verbose
+                        )
 
+        stats['W'].append(result[0])
+        stats['L'].append(result[1])
+        stats['S'].append(result[2])
+
+    return pd.DataFrame(data = stats)
 def run_simulation(
         arrival_lambda: float, bus_seats: int, bus_stops: int, time_limit: float = 100, verbose: bool = False
         ):

@@ -1,6 +1,6 @@
 import pandas as pd
 from simulation import get_average_queue_length, run_simulation, aggregate_results, get_average_waiting_time, \
-    get_average_serving_time
+    get_average_serving_time, get_statistics_distribution
 
 if __name__ == '__main__':
 
