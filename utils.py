@@ -202,7 +202,8 @@ class Simulation:
         return {
                 'arrivals': self.total_arrivals,
                 'queue'   : self.busStop.customers,
-                'served'  : self.total_served
+                'served'  : self.total_served,
+                'idle servers': self.bus.free_seats
                 }
 
     def get_customer_history(self):
