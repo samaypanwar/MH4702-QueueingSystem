@@ -34,7 +34,14 @@ def run_simulation(
         print("\nSimulation complete.")
         print(f"Total arrivals is {simulation.total_arrivals} with {simulation.total_served} actually served.")
 
-    return simulation.get_customer_history(), step_results
+    customer_results, system_results = aggregate_results(simulation.get_customer_history()), aggregate_results(
+            step_results)
+
+    W = get_average_waiting_time(customer_results)
+    L = get_average_queue_length(system_results)
+    S = get_average_serving_time(customer_results)
+
+    return [W, L, S]
 
 
 def aggregate_results(result: List[Dict]):
@@ -54,26 +61,26 @@ def aggregate_results(result: List[Dict]):
 
     return result_df
 
-def get_average_waiting_time(result_df: List[pd.DataFrame]) -> float:
+def get_average_waiting_time(customer_results: pd.DataFrame) -> float:
     """
     This function returns the average waiting time
     Parameters
     ----------
-    result_df : list of our two dataframe that contain information about the simulation
+    result_df : dataframe that contain information about the simulation
 
     Returns
     -------
     The average waiting time before being served
     """
 
-    return result_df[0][result_df[0].replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)].mean().waiting_time
+    return customer_results[customer_results.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)].mean().waiting_time
 
-def get_average_serving_time(result_df: List[pd.DataFrame]) -> float:
+def get_average_serving_time(customer_results: pd.DataFrame) -> float:
     """
     This function returns the average serving time
     Parameters
     ----------
-    result_df : list of our two dataframe that contain information about the simulation
+    customer_results : dataframe that contain information about the simulation
 
     Returns
     -------
@@ -81,19 +88,19 @@ def get_average_serving_time(result_df: List[pd.DataFrame]) -> float:
     """
 
 
-    return result_df[0][result_df[0].replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)].mean().serving_time
+    return customer_results[customer_results.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)].mean().serving_time
 
-def get_average_queue_length(result_df: List[pd.DataFrame]) -> float:
+def get_average_queue_length(system_results: pd.DataFrame) -> float:
     """
     This function returns the average queue length
     Parameters
     ----------
-    result_df : list of our two dataframe that contain information about the simulation
+    system_results : dataframe that contain information about the simulation
 
     Returns
     -------
     This function returns the average queue length
     """
 
-    return result_df[1][result_df[1].replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)].mean().queue
+    return system_results[system_results.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)].mean().queue
 
