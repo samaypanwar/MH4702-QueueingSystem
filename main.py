@@ -7,11 +7,11 @@ if __name__ == '__main__':
     verbose = False
     time_limit = float("inf") # no time limit
     serving_limit = 1000
-    iterations = 500
+    iterations = 10
     standard_mc_results = []
     antithetic_variables_results = []
 
-    for arrival_lambda in [5, 20, 50]:
+    for arrival_lambda in [20, 50]:
         for bus_seats in [10, 50, 100]:
             for bus_stops in tqdm([5, 10, 20]):
 

@@ -17,7 +17,9 @@ def generate_exponential(lmbda: float):
     """
 
     randomNumber = np.random.uniform(low = 0.0, high = 1.0)
-    return stats.expon.ppf(q = randomNumber, scale = 1 / lmbda)
+    return - (1 / lmbda) * np.log(randomNumber)
+    # return stats.expon.ppf(q = randomNumber, scale = 1 / lmbda)
+
 
 def generate_exponential_antithetic(lmbda: float):
     """This function generates an exponential random variable with the provided parameters.
@@ -27,7 +29,8 @@ def generate_exponential_antithetic(lmbda: float):
     """
 
     randomNumber = np.random.uniform(low = 0.0, high = 1.0)
-    return [stats.expon.ppf(q = randomNumber, scale = 1 / lmbda), stats.expon.ppf(q = 1 - randomNumber, scale = 1 / lmbda)]
+    return ((- (1 / lmbda) * np.log(1 - randomNumber)) + (- (1 / lmbda) * np.log(randomNumber))) / 2
+    # return (stats.expon.ppf(q = randomNumber, scale = 1 / lmbda) + stats.expon.ppf(q = 1 - randomNumber, scale = 1 / lmbda)) / 2
 
 
 def generate_normal(loc: float = 0, scale: float = 1):
@@ -62,4 +65,5 @@ def generate_binomial_antithetic(n: int, p: float = 0.5):
     """
 
     randomNumber = np.random.uniform(low = 0.0, high = 1.0)
-    return [stats.binom.ppf(q = randomNumber, n = n, p = p), stats.binom.ppf(q = 1 - randomNumber, n = n, p = p)]
+    return stats.binom.ppf(q = randomNumber, n = n, p = p)
+    # return (stats.binom.ppf(q = randomNumber, n = n, p = p) + stats.binom.ppf(q = 1 - randomNumber, n = n, p = p)) / 2

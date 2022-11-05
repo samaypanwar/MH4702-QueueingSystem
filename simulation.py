@@ -62,35 +62,23 @@ def run_experiment(
 
         # arrival_lambda = average number of customers in a time period
         if variance_reduction == 'Antithetic Variables':
-            interarrival_times_list = [generate_exponential_antithetic(arrival_lambda) for _ in range(serving_limit)]
-            serving_times_list = [[x+1 for x in generate_binomial_antithetic(n=bus_stops)] for _ in range(serving_limit)]
-
-            for interarrival_times, serving_times in zip(zip(*interarrival_times_list), zip(*serving_times_list)):
-                customer_history = run_simulation(bus_seats, bus_stops, interarrival_times, serving_times, serving_limit, verbose)
-                customer_history = aggregate_results(customer_history)
-                experiment_results.append({
-                    'arrival_lambda': arrival_lambda,
-                    'bus_seats': bus_seats,
-                    'bus_stops': bus_stops,
-                    'average_waiting_time': np.mean(customer_history['waiting_time']),
-                    'average_time_in_system': np.mean(customer_history['time_in_system']),
-                    'average_customers_upon_arrival': np.mean(customer_history['customers_upon_arrival'])
-                })
+            interarrival_times = [generate_exponential_antithetic(arrival_lambda) for _ in range(serving_limit)]
+            serving_times = [generate_binomial_antithetic(n=bus_stops)+1 for _ in range(serving_limit)]
 
         else: # Standard MC
             interarrival_times = [generate_exponential(arrival_lambda) for _ in range(serving_limit)]
             serving_times = [generate_binomial(n=bus_stops)+1 for _ in range(serving_limit)]
 
-            customer_history = run_simulation(bus_seats, bus_stops, interarrival_times, serving_times, serving_limit, verbose)
-            customer_history = aggregate_results(customer_history)
-            experiment_results.append({
-                'arrival_lambda': arrival_lambda,
-                'bus_seats': bus_seats,
-                'bus_stops': bus_stops,
-                'average_waiting_time': np.mean(customer_history['waiting_time']),
-                'average_time_in_system': np.mean(customer_history['time_in_system']),
-                'average_customers_upon_arrival': np.mean(customer_history['customers_upon_arrival'])
-            })
+        customer_history = run_simulation(bus_seats, bus_stops, interarrival_times, serving_times, serving_limit, verbose)
+        customer_history = aggregate_results(customer_history)
+        experiment_results.append({
+            'arrival_lambda': arrival_lambda,
+            'bus_seats': bus_seats,
+            'bus_stops': bus_stops,
+            'average_waiting_time': np.mean(customer_history['waiting_time']),
+            'average_time_in_system': np.mean(customer_history['time_in_system']),
+            'average_customers_upon_arrival': np.mean(customer_history['customers_upon_arrival'])
+        })
 
     results = pd.DataFrame(experiment_results)
 
