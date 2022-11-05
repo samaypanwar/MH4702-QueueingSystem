@@ -10,27 +10,26 @@ import scipy.stats as stats
 # importance sampling
 
 def generate_exponential(lmbda: float):
-    """This function generates an exponential random variable with the provided parameters.
+    """This function generates an exponential random variable with the provided parameters using inverse transform.
 
     Parameters----
     lmbda : the 1/scale parameter for your exponential distribution
     """
 
-    randomNumber = np.random.uniform(low = 0.0, high = 1.0)
-    return - (1 / lmbda) * np.log(randomNumber)
-    # return stats.expon.ppf(q = randomNumber, scale = 1 / lmbda)
+    random_number = np.random.uniform(low = 0.0, high = 1.0)
+    return - (1 / lmbda) * np.log(random_number)
 
 
 def generate_exponential_antithetic(lmbda: float):
-    """This function generates an exponential random variable with the provided parameters.
+    """This function generates an exponential random variable with the provided parameters using inverse transform.
+    Uses antithetic variables.
 
     Parameters----
     lmbda : the 1/scale parameter for your exponential distribution
     """
 
-    randomNumber = np.random.uniform(low = 0.0, high = 1.0)
-    return ((- (1 / lmbda) * np.log(1 - randomNumber)) + (- (1 / lmbda) * np.log(randomNumber))) / 2
-    # return (stats.expon.ppf(q = randomNumber, scale = 1 / lmbda) + stats.expon.ppf(q = 1 - randomNumber, scale = 1 / lmbda)) / 2
+    random_number = np.random.uniform(low = 0.0, high = 1.0)
+    return ((- (1 / lmbda) * np.log(1 - random_number)) + (- (1 / lmbda) * np.log(random_number))) / 2
 
 
 def generate_normal(loc: float = 0, scale: float = 1):
@@ -41,8 +40,8 @@ def generate_normal(loc: float = 0, scale: float = 1):
     scale : the standard deviation of your normal distribution
     """
 
-    randomNumber = np.random.uniform(low = 0.0, high = 1.0)
-    return stats.norm.ppf(q = randomNumber, scale = scale, loc = loc)
+    random_number = np.random.uniform(low = 0.0, high = 1.0)
+    return stats.norm.ppf(q = random_number, scale = scale, loc = loc)
 
 
 def generate_binomial(n: int, p: float = 0.5):
@@ -53,17 +52,17 @@ def generate_binomial(n: int, p: float = 0.5):
     p: the probability of a trial being successfull
     """
 
-    randomNumber = np.random.uniform(low = 0.0, high = 1.0)
-    return stats.binom.ppf(q = randomNumber, n = n, p = p)
+    random_number = np.random.uniform(low = 0.0, high = 1.0)
+    return stats.binom.ppf(q = random_number, n = n, p = p)
     
 def generate_binomial_antithetic(n: int, p: float = 0.5):
     """This function generates a binomial random variable with the provided parameters.
+    Uses antithetic variables.
 
     Parameters----
     n : the number of trials
     p: the probability of a trial being successfull
     """
 
-    randomNumber = np.random.uniform(low = 0.0, high = 1.0)
-    return stats.binom.ppf(q = randomNumber, n = n, p = p)
-    # return (stats.binom.ppf(q = randomNumber, n = n, p = p) + stats.binom.ppf(q = 1 - randomNumber, n = n, p = p)) / 2
+    random_number = np.random.uniform(low = 0.0, high = 1.0)
+    return (stats.binom.ppf(q = random_number, n = n, p = p) + stats.binom.ppf(q = 1 - random_number, n = n, p = p)) / 2

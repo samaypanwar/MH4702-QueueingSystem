@@ -1,7 +1,7 @@
-from utils import Simulation
+from helpers.simulation import Simulation
 from typing import List, Dict
 import pandas as pd
-from inverse_transform_sampling import *
+from utils.inverse_transform_sampling import *
 import numpy as np
 from tqdm import tqdm
 
@@ -126,6 +126,7 @@ def run_experiment(
         'customers_upon_arrival_std': np.std(results['average_customers_upon_arrival']),
     }
 
+
 def get_average_waiting_time(customer_results: pd.DataFrame) -> float:
     """
     This function returns the average waiting time
@@ -140,6 +141,7 @@ def get_average_waiting_time(customer_results: pd.DataFrame) -> float:
 
     return customer_results[customer_results.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)].mean().waiting_time
 
+
 def get_average_serving_time(customer_results: pd.DataFrame) -> float:
     """
     This function returns the average serving time
@@ -153,6 +155,7 @@ def get_average_serving_time(customer_results: pd.DataFrame) -> float:
     """
 
     return customer_results[customer_results.replace([np.inf, -np.inf], np.nan).notnull().all(axis=1)].mean().serving_time
+
 
 def get_average_queue_length(system_results: pd.DataFrame) -> float:
     """
