@@ -93,13 +93,16 @@ def run_experiment(
 
         # arrival_lambda = average number of customers in a time period
         if variance_reduction == 'Antithetic Variables':
-            interarrival_times = [generate_exponential_antithetic(arrival_lambda) for _ in range(serving_limit)]
-            serving_times = [generate_binomial_antithetic(n=bus_stops)+1 for _ in range(serving_limit)]
-            iterations = iterations // 2
+            interarrival_times = generate_exponential_antithetic(arrival_lambda, num_samples=serving_limit)
+            serving_times = [x+1 for x in generate_binomial_antithetic(n=bus_stops, num_samples=serving_limit)]
 
         elif variance_reduction == 'Stratified Sampling':
             interarrival_times = generate_exponential_stratified(arrival_lambda, serving_limit, 10)
             serving_times = [x+1 for x in generate_binomial_stratified(n=bus_stops, num_samples=serving_limit, bins=10)]
+
+        elif variance_reduction == 'Control Variates':
+            interarrival_times = generate_exponential_control_variate(arrival_lambda, serving_limit)
+            serving_times = [generate_binomial(n=bus_stops)+1 for _ in range(serving_limit)]
 
         else: # Standard MC
             interarrival_times = [generate_exponential(arrival_lambda) for _ in range(serving_limit)]
@@ -117,7 +120,7 @@ def run_experiment(
         })
 
     results = pd.DataFrame(experiment_results)
-
+    
     return {
         'arrival_lambda': arrival_lambda,
         'bus_seats': bus_seats,
