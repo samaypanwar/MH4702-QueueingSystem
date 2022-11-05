@@ -83,7 +83,6 @@ def aggregate_results(result: List[Dict]):
 
     return result_df
 
-
 def run_experiment(
     iterations: int, arrival_lambda: float, bus_seats: int, bus_stops: int, variance_reduction: str = 'Standard MC',
     serving_limit: int = 100, time_limit: float = float('inf'), verbose: bool = False):
@@ -96,11 +95,16 @@ def run_experiment(
         if variance_reduction == 'Antithetic Variables':
             interarrival_times = [generate_exponential_antithetic(arrival_lambda) for _ in range(serving_limit)]
             serving_times = [generate_binomial_antithetic(n=bus_stops)+1 for _ in range(serving_limit)]
+            iterations = iterations // 2
+
+        elif variance_reduction == 'Stratified Sampling':
+            interarrival_times = generate_exponential_stratified(arrival_lambda, serving_limit, 10)
+            serving_times = [x+1 for x in generate_binomial_stratified(n=bus_stops, num_samples=serving_limit, bins=10)]
 
         else: # Standard MC
             interarrival_times = [generate_exponential(arrival_lambda) for _ in range(serving_limit)]
             serving_times = [generate_binomial(n=bus_stops)+1 for _ in range(serving_limit)]
-
+        
         customer_history = run_simulation(bus_seats, bus_stops, interarrival_times, serving_times, serving_limit, time_limit, verbose)
         experiment_results.append({
             'arrival_lambda': arrival_lambda,
