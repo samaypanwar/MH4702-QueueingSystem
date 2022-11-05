@@ -1,18 +1,19 @@
 from utils import Simulation
 from typing import List, Dict
 import pandas as pd
-
+from inverse_transform_sampling import *
 
 def run_simulation(
-        arrival_lambda: float, bus_seats: int, bus_stops: int, time_limit: float = 100, verbose: bool = False
-        ):
+        bus_seats: int, bus_stops: int, 
+        interarrival_times: List[float], serving_times: List[float],
+        serving_limit: int = 100, verbose: bool = False):
     """This function goes through one simulation cycle of our system"""
 
     # Create a simulation object
-    simulation = Simulation(arrival_lambda, bus_seats, bus_stops, verbose)
+    simulation = Simulation(bus_seats, bus_stops, interarrival_times, serving_times, verbose)
 
-    # While the system clock is less than our limit
-    while simulation.time < time_limit:
+    # While the number of customers served is fewer than the serving limit for the simulation
+    while simulation.total_served < serving_limit:
 
         if verbose:
             print(f"Current time is {simulation.time}.")
@@ -49,3 +50,59 @@ def aggregate_results(result: List[Dict]):
     result_df = pd.DataFrame(data = temp)
 
     return result_df
+
+
+def run_experiment(
+    iterations: int, arrival_lambda: float, bus_seats: int, bus_stops: int, variance_reduction: str = 'Standard MC',
+    serving_limit: int = 100, verbose: bool = False):
+
+    experiment_results = []
+
+    for _ in range(iterations):
+
+        # arrival_lambda = average number of customers in a time period
+        if variance_reduction == 'Antithetic Variables':
+            interarrival_times_list = [generate_exponential_antithetic(arrival_lambda) for _ in range(serving_limit)]
+            serving_times_list = [[x+1 for x in generate_binomial_antithetic(n=bus_stops)] for _ in range(serving_limit)]
+
+            for interarrival_times, serving_times in zip(zip(*interarrival_times_list), zip(*serving_times_list)):
+                customer_history = run_simulation(bus_seats, bus_stops, interarrival_times, serving_times, serving_limit, verbose)
+                customer_history = aggregate_results(customer_history)
+                experiment_results.append({
+                    'arrival_lambda': arrival_lambda,
+                    'bus_seats': bus_seats,
+                    'bus_stops': bus_stops,
+                    'average_waiting_time': np.mean(customer_history['waiting_time']),
+                    'average_time_in_system': np.mean(customer_history['time_in_system']),
+                    'average_customers_upon_arrival': np.mean(customer_history['customers_upon_arrival'])
+                })
+
+        else: # Standard MC
+            interarrival_times = [generate_exponential(arrival_lambda) for _ in range(serving_limit)]
+            serving_times = [generate_binomial(n=bus_stops)+1 for _ in range(serving_limit)]
+
+            customer_history = run_simulation(bus_seats, bus_stops, interarrival_times, serving_times, serving_limit, verbose)
+            customer_history = aggregate_results(customer_history)
+            experiment_results.append({
+                'arrival_lambda': arrival_lambda,
+                'bus_seats': bus_seats,
+                'bus_stops': bus_stops,
+                'average_waiting_time': np.mean(customer_history['waiting_time']),
+                'average_time_in_system': np.mean(customer_history['time_in_system']),
+                'average_customers_upon_arrival': np.mean(customer_history['customers_upon_arrival'])
+            })
+
+    results = pd.DataFrame(experiment_results)
+
+    return {
+        'arrival_lambda': arrival_lambda,
+        'bus_seats': bus_seats,
+        'bus_stops': bus_stops,
+        'waiting_time_mean': np.mean(results['average_waiting_time']),
+        'waiting_time_std': np.std(results['average_waiting_time']),
+        'time_in_system_mean': np.mean(results['average_time_in_system']),
+        'time_in_system_std': np.std(results['average_time_in_system']),
+        'customers_upon_arrival_mean': np.mean(results['average_customers_upon_arrival']),
+        'customers_upon_arrival_std': np.std(results['average_customers_upon_arrival']),
+    }
+
