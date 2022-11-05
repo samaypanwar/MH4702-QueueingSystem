@@ -7,7 +7,7 @@ if __name__ == '__main__':
     verbose = False
     time_limit = float("inf") # no time limit
     serving_limit = 1000
-    iterations = 10
+    iterations = 100
     standard_mc_results = []
     antithetic_variables_results = []
 
