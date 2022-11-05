@@ -12,7 +12,7 @@ if __name__ == '__main__':
     antithetic_variables_results = []
 
     for arrival_lambda in [20, 50]:
-        for bus_seats in [10, 50, 100]:
+        for bus_seats in [50, 100]:
             for bus_stops in tqdm([5, 10, 20]):
 
                 antithetic_variables_results.append(run_experiment(
@@ -22,6 +22,7 @@ if __name__ == '__main__':
                     bus_stops=bus_stops,
                     variance_reduction='Antithetic Variables',
                     serving_limit=serving_limit,
+                    time_limit = time_limit,
                     verbose=verbose))
 
                 print(antithetic_variables_results[-1])
@@ -33,6 +34,7 @@ if __name__ == '__main__':
                     bus_stops=bus_stops,
                     variance_reduction='Standard MC',
                     serving_limit=serving_limit,
+                    time_limit = time_limit,
                     verbose=verbose))
 
                 print(standard_mc_results[-1])
@@ -45,9 +47,7 @@ if __name__ == '__main__':
     print("\nAntithetic Variables results:")
     print(antithetic_variables_df)
 
-    antithetic_variables_df.to_csv('antithetic_variables_results.csv')
-    standard_mc_df.to_csv('standard_mc_results.csv')
-                
+    # antithetic_variables_df.to_csv('antithetic_variables_results.csv')
+    # standard_mc_df.to_csv('standard_mc_results.csv')
 
 # TODO: Add logging statements
-# TODO: Create more than one bus class update

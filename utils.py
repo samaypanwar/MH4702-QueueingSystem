@@ -3,7 +3,6 @@ from typing import List, Dict
 
 """File containing the required classes for our simulation"""
 
-
 class Customer:
     def __init__(self, birth_time: float, system_customers: int, verbose: bool = False):
         """This class creates a new customer object that needs the lambda parameter for the birth process"""
@@ -138,7 +137,7 @@ class Bus:
         customers_served = 0
 
         # Possible that multiple customers may have identical serving times
-        while current_time in self.departure_times:
+        while current_time in self.departure_times and customers_served <= len(self.seats):
             # Get the serving time for the customer who is supposed to leave at the current time
             seat_number = self.departure_times.index(current_time)
             # Get the customer who is supposed to leave at the current time
@@ -211,16 +210,15 @@ class Simulation:
         return {
                 'arrivals': self.total_arrivals,
                 'queue'   : self.busStop.customers,
-                'served'  : self.total_served
+                'served'  : self.total_served,
+                'idle servers': self.bus.free_seats
                 }
 
     def get_customer_history(self):
         """This function returns the customer history of all the customers served by the bus"""
 
-        return self.bus.customer_history
-
-        # return self.bus.customer_history + [customer.calculate_stats() for customer in self.bus.seats] + [
-        #         customer.calculate_stats() for customer in self.busStop.queue]
+        return self.bus.customer_history + [customer.calculate_stats() for customer in self.bus.seats if customer is
+                                            not None] + [customer.calculate_stats() for customer in self.busStop.queue]
 
     def generate_next_arrival(self):
         """This function generates the next arrival time for a customer"""
