@@ -136,7 +136,7 @@ class Bus:
         customers_served = 0
 
         # Possible that multiple customers may have identical serving times
-        while current_time in self.departure_times:
+        while current_time in self.departure_times and customers_served <= len(self.seats):
             # Get the serving time for the customer who is supposed to leave at the current time
             seat_number = self.departure_times.index(current_time)
             # Get the customer who is supposed to leave at the current time

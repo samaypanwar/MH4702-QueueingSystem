@@ -5,8 +5,9 @@ from simulation import get_average_queue_length, run_simulation, aggregate_resul
 if __name__ == '__main__':
 
     verbose = False
-    time_limit = 1000
-    arrival_lambda = 10
+
+    time_limit = 720
+    arrival_lambda = 1
     bus_seats = 50
     bus_stops = 10
     result = run_simulation(
