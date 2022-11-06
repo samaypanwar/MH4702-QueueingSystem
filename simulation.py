@@ -7,21 +7,38 @@ from tqdm import tqdm
 
 # overlap between this and run_experiment
 def get_statistics_distribution(arrival_lambda: float, bus_seats: int, bus_stops: int, time_limit: float = 100,
-                                verbose: bool = False, runs: int = 1000):
+                                verbose: bool = False, runs: int = 1000, counter = True):
     stats = {'W': [], 'L': [], 'S': []}
 
-    for _ in tqdm(range(runs)):
-        result = run_simulation(
-                        arrival_lambda = arrival_lambda,
-                        bus_seats = bus_seats,
-                        bus_stops = bus_stops,
-                        time_limit = time_limit,
-                        verbose = verbose
-                        )
+    if counter:
 
-        stats['W'].append(result[0])
-        stats['L'].append(result[1])
-        stats['S'].append(result[2])
+        for _ in tqdm(range(runs)):
+
+            result = run_simulation(
+                            arrival_lambda = arrival_lambda,
+                            bus_seats = bus_seats,
+                            bus_stops = bus_stops,
+                            time_limit = time_limit,
+                            verbose = verbose
+                            )
+
+            stats['W'].append(result['average_waiting_time'])
+            stats['L'].append(result['average_queue_length'])
+            stats['S'].append(result['average_serving_time'])
+    else:
+
+        for _ in range(runs):
+            result = run_simulation(
+                    arrival_lambda = arrival_lambda,
+                    bus_seats = bus_seats,
+                    bus_stops = bus_stops,
+                    time_limit = time_limit,
+                    verbose = verbose
+                    )
+
+            stats['W'].append(result['average_waiting_time'])
+            stats['L'].append(result['average_queue_length'])
+            stats['S'].append(result['average_serving_time'])
 
     return pd.DataFrame(data = stats)
 
