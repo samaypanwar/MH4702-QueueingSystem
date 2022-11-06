@@ -75,8 +75,6 @@ def generate_exponential_control_variate(lmbda: float, num_samples: int):
     # Calculate beta and alpha
     beta = df['xycov'].sum() / df['xvar'].sum()
     alpha = samples_mean - (beta * controls_mean)
-    print(f'alpha = {alpha}')
-    print(f'beta = {beta}')
 
     c = - beta
 
