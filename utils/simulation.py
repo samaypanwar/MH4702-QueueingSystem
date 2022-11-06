@@ -122,6 +122,8 @@ def run_experiment(
     results = pd.DataFrame(experiment_results)
     
     return {
+        'technique': variance_reduction,
+        'iterations': iterations,
         'arrival_lambda': arrival_lambda,
         'bus_seats': bus_seats,
         'bus_stops': bus_stops,

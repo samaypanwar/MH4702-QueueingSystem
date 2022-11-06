@@ -1,5 +1,5 @@
 import pandas as pd
-from simulation import run_experiment
+from utils.simulation import run_experiment
 from tqdm import tqdm
 
 if __name__ == '__main__':
